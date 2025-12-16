@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-
+//cheak plz
 /* ---------- helpers ---------- */
 
 static Node *node_create(const char *s)
