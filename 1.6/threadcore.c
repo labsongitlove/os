@@ -1,6 +1,6 @@
 #define _GNU_SOURCE
 #include "threadcore.h"
-
+//cheak plz
 #include <errno.h>
 #include <linux/futex.h>
 #include <sched.h>
