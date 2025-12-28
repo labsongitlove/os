@@ -9,6 +9,7 @@
 typedef struct tc_thread {
     atomic_int done;        /* 0 — running, 1 — finished */
     atomic_int detached;    /* 0 — joinable, 1 — detached */
+    atomic_int cleaned; 
 
     void *stack;
     void *(*fn)(void *);

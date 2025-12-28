@@ -22,21 +22,17 @@ static int futex_wake(atomic_int *addr)
     return syscall(SYS_futex, addr, FUTEX_WAKE, 1, NULL, NULL, 0);
 }
 
-/* ---- thread entry ---- */
-
 static int thread_entry(void *p)
 {
     tc_thread_t *t = p;
 
-    void *r = t->fn(t->arg);
-    t->retval = r;
+    t->retval = t->fn(t->arg);
 
     atomic_store(&t->done, 1);
     futex_wake(&t->done);
 
     return 0;
 }
-
 /* ---- create ---- */
 
 int tc_spawn(tc_thread_t *t, void *(*fn)(void *), void *arg)
@@ -83,8 +79,6 @@ int tc_spawn(tc_thread_t *t, void *(*fn)(void *), void *arg)
     return 0;
 }
 
-/* ---- join ---- */
-
 int tc_join(tc_thread_t *t, void **out)
 {
     if (!t || atomic_load(&t->detached)) {
@@ -98,18 +92,13 @@ int tc_join(tc_thread_t *t, void **out)
     if (out)
         *out = t->retval;
 
-    /* ensure stack freed exactly once */
-    if (!atomic_exchange(&t->detached, 1)) {
-        if (t->stack) {
-            munmap(t->stack, TC_STACKSIZE);
-            t->stack = NULL;
-        }
+    if (t->stack) {
+        munmap(t->stack, TC_STACKSIZE);
+        t->stack = NULL;
     }
 
     return 0;
 }
-
-/* ---- detach ---- */
 
 int tc_detach(tc_thread_t *t)
 {
@@ -121,11 +110,13 @@ int tc_detach(tc_thread_t *t)
     if (atomic_exchange(&t->detached, 1))
         return 0;
 
-    if (atomic_load(&t->done)) {
-        if (t->stack) {
-            munmap(t->stack, TC_STACKSIZE);
-            t->stack = NULL;
-        }
+    /* если поток ещё работает — ждём */
+    while (!atomic_load(&t->done))
+        futex_wait(&t->done, 0);
+
+    if (t->stack) {
+        munmap(t->stack, TC_STACKSIZE);
+        t->stack = NULL;
     }
 
     return 0;
