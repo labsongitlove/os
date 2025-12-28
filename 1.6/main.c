@@ -21,8 +21,13 @@ int main(void)
     tc_thread_t th[N];
 
     for (long i = 0; i < N; ++i) {
-        tc_spawn(&th[i], task, (void *)i);
-        tc_detach(&th[i]);     // detach сразу
+      tc_spawn(&th[i], task, (void *)i);
+        if (i < 100)
+          tc_detach(&th[i]);     // detach сразу
+        else{
+          void *rv = NULL;
+          tc_join(&th[i], &rv);  
+        }
     }
 
     sleep(3);

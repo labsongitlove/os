@@ -9,7 +9,9 @@
 typedef struct tc_thread {
     atomic_int done;        /* 0 — running, 1 — finished */
     atomic_int detached;    /* 0 — joinable, 1 — detached */
-    atomic_int cleaned; 
+    atomic_int cleaned;     /* 0 — stack not freed, 1 — freed */
+
+    struct tc_thread *reap_next; /* for reaper queue */
 
     void *stack;
     void *(*fn)(void *);
